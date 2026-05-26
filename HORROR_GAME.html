@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>العالم المفتوح المرعب</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body, html {
+            width: 100%; height: 100%;
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+            touch-action: none;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* القائمة الرئيسية */
+        #main-menu {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, #1a0000 0%, #000 50%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #main-menu.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #menu-content {
+            text-align: center;
+            color: #fff;
+            padding: 60px 30px;
+            max-width: 95%;
+        }
+
+        #menu-content h1 {
+            font-size: 2rem;
+            color: #ff2222;
+            text-shadow: 0 0 40px #ff0000, 0 0 40px #cc0000;
+            margin-bottom: 20px;
+            animation: flicker 0.15s infinite;
+        }
+
+        #menu-content p {
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 15px;
+            line-height: 1
+        }
+
+        #start-btn {
+            background: linear-gradient(135deg, #cc0000, #660000);
+            color: #fff;
+            border: 3px solid #ff3333;
+            padding: 15px 30px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 0 15px #ff0000;
+            transition: all 0.3s;
+            text-shadow: 0 0 10px #ff0000;
+            width: 100%;
+            max-width: 150px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #start-btn:hover {
+            box-shadow: 0 0 50px #ff0000;
+            transform: scale(1.05);
+        }
+
+        #start-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes flicker {
+            0%, 100% { text-shadow: 0 0 40px #ff0000; }
+            50% { text-shadow: 0 0 20px #ff0000; }
+        }
+
+        /* واجهة المستخدم - محسّنة للموبايل */
+        #ui {
+            position: absolute;
+            top: 20px; left: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 3px solid #0f0;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            font-size: 14px;
+            color: #0f0;
+            line-height: 0.6
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            max-width: 90%;
+            backdrop-filter: blur(5px);
+        }
+
+        #coordinates {
+            color: #ffff00;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        #monster-distance {
+            color: #ff6666;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        #light-status {
+            color: #ffff00;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #battery-bar {
+            width: 120px;
+            height: 12px;
+            background: #111;
+            border: 2px solid #0f0;
+            border-radius: 6px;
+            margin-top: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        #battery-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0f0, #00ff00);
+            width: 100%;
+            transition: width 0.2s;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        /* الأزرار - محسّنة للموبايل */
+        #flashlight-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at 35% 35%, #ff6666, #cc0000);
+            border: 4px solid #ff3333;
+            border-radius: 50%;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+            transition: all 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #flashlight-btn:active {
+            box-shadow: 0 0 60px rgba(255, 0, 0, 1);
+            transform: scale(0.88);
+        }
+
+        /* الجويستيك - محسّن للموبايل */
+        #joystick {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            z-index: 100;
+            touch-action: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        #joystick-thumb {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2));
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        /* شاشة الجامب سكير */
+        #jump-scare {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        #jump-scare.active {
+            display: flex;
+            animation: scarePulse 0.05s infinite;
+        }
+
+        #scare-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes scarePulse {
+            0% { transform: scale(1) rotate(1deg); }
+            50% { transform: scale(1.02) rotate(-1deg); }
+            100% { transform: scale(1) rotate(1deg); }
+        }
+
+        /* شاشة الموت */
+        #death-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2001;
+            flex-direction: column;
+        }
+
+        #death-screen.active {
+            display: flex;
+        }
+
+        #death-text {
+            color: #ff2222;
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 30px #ff0000;
+            margin-bottom: 50px;
+            animation: deathPulse 0.6s infinite;
+        }
+
+        @keyframes deathPulse {
+            0%, 100% { text-shadow: 0 0 30px #ff0000; }
+            50% { text-shadow: 0 0 80px #ff0000; }
+        }
+
+        #restart-btn {
+            background: #cc0000;
+            color: #fff;
+            border: 2px solid #ff3333;
+            padding: 15px 60px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #restart-btn:hover {
+            box-shadow: 0 0 40px #ff0000;
+        }
+
+        /* مؤشر البوصلة - محسّن */
+        #compass {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff4444;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 100;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #ff6666;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+            text-shadow: 0 0 10px #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <!-- القائمة الرئيسية -->
+    <div id="main-menu">
+        <div id="menu-content">
+            <h1>🌍 العالم المفتوح 🌍</h1>
+            <p>
+                استكشف عالماً واسعاً مليئاً بالأسرار<br>
+                ابحث عن 5 مفاتيح ذهبية<br>
+                لكن احذر... لست وحدك هنا<br>
+                <span style="color: #ff4444; font-weight: bold;">الوحش يراقبك دائماً</span><br><br>
+                <span style="font-size: 0.9rem; color: #ffff00;">
+                    🖱️ اسحب الماوس = لف الكاميرا<br>
+                    👆 اسحب الشاشة (خارج الجويستيك) = لف الكاميرا<br>
+                    ⬆️⬇️⬅️➡️ أسهم لوحة المفاتيح = نظر علوي/سفلي
+                </span>
+            </p>
+            <button id="start-btn">▶ دخول العالم ◀</button>
+        </div>
+    </div>
+
+    <!-- الحاوية الرئيسية للعبة -->
+    <div id="game-container"></div>
+
+    <!-- واجهة المستخدم -->
+    <div id="ui">
+        <div id="coordinates">X: 0 | Z: 0</div>
+        <div id="light-status">💡 LIGHT: OFF</div>
+        <div id="monster-distance">👹 DIST: ---</div>
+        <div>🔑 KEYS: <span id="key-count">0</span>/5</div>
+        <div id="battery-bar">
+            <div id="battery-fill"></div>
+        </div>
+    </div>
+
+    <!-- زر الضوء -->
+    <button id="flashlight-btn">🔦<br>LIGHT</button>
+
+    <!-- الجويستيك -->
+    <div id="joystick">
+        <div id="joystick-thumb"></div>
+    </div>
+
+    <!-- البوصلة -->
+    <div id="compass">← MONSTER ←</div>
+
+    <!-- شاشة الجامب سكير -->
+    <div id="jump-scare">
+        <canvas id="scare-canvas"></canvas>
+    </div>
+
+    <!-- شاشة الموت -->
+    <div id="death-screen">
+        <div id="death-text">لقد تم صيدك! 💀</div>
+        <button id="restart-btn">إعادة محاولة</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // === المتغيرات الأساسية ===
+        let scene, camera, renderer;
+        let flashlight;
+        let gameActive = true;
+        let gameStarted = false;
+
+        const player = {
+            x: 0, y: 2, z: 0,
+            yaw: 0, pitch: 0,
+            speed: 0.2
+        };
+
+        const monster = {
+            x: 100, y: 2, z: 100,
+            speed: 0.06,
+            seenPlayer: false,
+            distToPlayer: 1000,
+            mesh: null
+        };
+
+        // === نظام الصوت ===
+        let audioCtx;
+        const keys = {};
+        let joystickX = 0, joystickY = 0;
+
+        // === الإضاءة ===
+        let lightMode = 0;
+        const lightModes = [
+            { intensity: 0, range: 0, name: 'OFF' },
+            { intensity: 25, range: 50, name: 'ECO' },
+            { intensity: 80, range: 120, name: 'MEDIUM' },
+            { intensity: 200, range: 200, name: 'BRIGHT!' }
+        ];
+        let battery = 100;
+        const batteryDrain = [0, 0.08, 0.25, 0.8];
+
+        // === متغيرات اللعبة ===
+        let keysCollected = 0;
+        let worldData = {};
+
+        // === التهيئة ===
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.fog = new THREE.FogExp2(0x000000, 0.008);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                85,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(player.x, player.y, player.z);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFShadowMap;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            // الإضاءة
+            const ambientLight = new THREE.AmbientLight(0x0d0d0d, 0.2);
+            scene.add(ambientLight);
+
+            // ضوء القمر
+            const moonLight = new THREE.DirectionalLight(0x4a4a6a, 0.15);
+            moonLight.position.set(100, 80, 100);
+            moonLight.castShadow = true;
+            scene.add(moonLight);
+
+            // المصباح اليدوي
+            flashlight = new THREE.SpotLight(0xffffcc, 0, 200, Math.PI / 4, 0.5, 0.9);
+            flashlight.position.set(player.x, player.y, player.z);
+            flashlight.castShadow = true;
+            flashlight.shadow.mapSize.width = 2048;
+            flashlight.shadow.mapSize.height = 2048;
+
+            const target = new THREE.Object3D();
+            flashlight.target = target;
+            scene.add(flashlight);
+            scene.add(target);
+
+            // بناء العالم
+            buildOpenWorld();
+
+            // إنشاء الوحش
+            createMonster();
+
+            // معالجات الإدخال
+            setupControls();
+
+            // حلقة التحديث
+            animate();
+        }
+
+        function buildOpenWorld() {
+            // الأرض
+            const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1a1a0a,
+                roughness: 0.95,
+                metalness: 0
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // إنشاء مباني عشوائية
+            for (let i = 0; i < 30; i++) {
+                const x = (Math.random() - 0.5) * 400;
+                const z = (Math.random() - 0.5) * 400;
+
+                if (Math.hypot(x, z) < 30) continue;
+
+                // المباني
+                const width = 15 + Math.random() * 20;
+                const height = 8 + Math.random() * 15;
+                const depth = 15 + Math.random() * 20;
+
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const buildingMaterial = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color().setHSL(0, 0, 0.15 + Math.random() * 0.1),
+                    roughness: 0.8
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.position.set(x, height / 2, z);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                scene.add(building);
+
+                // شبابيك
+                for (let wx = 0; wx < Math.floor(width / 5); wx++) {
+                    for (let wy = 0; wy < Math.floor(height / 5); wy++) {
+                        if (Math.random() > 0.4) {
+                            const windowGeom = new THREE.BoxGeometry(3, 3, 0.5);
+                            const windowMat = new THREE.MeshStandardMaterial({
+                                color: 0x1a0000,
+                                emissive: 0x330000,
+                                emissiveIntensity: 0.3
+                            });
+                            const windowMesh = new THREE.Mesh(windowGeom, windowMat);
+                            windowMesh.position.set(
+                                -width / 2 + wx * 5 + 2.5,
+                                2 + wy * 5 + 2.5,
+                                depth / 2 + 0.5
+                            );
+                            building.add(windowMesh);
+                        }
+                    }
+                }
+            }
+
+            // الأشجار
+            for (let i = 0; i < 50; i++) {
+                const x = (Math.random() - 0.5) * 500;
+                const z = (Math.random() - 0.5) * 500;
+
+                if (Math.hypot(x, z) < 25) continue;
+
+                // الجذع
+                const trunkGeometry = new THREE.CylinderGeometry(2, 3, 15, 8);
+                const trunkMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x0a0a0a,
+                    roughness: 0.9
+                });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.set(x, 7.5, z);
+                trunk.castShadow = true;
+                scene.add(trunk);
+
+                // الأوراق
+                const foliageGeometry = new THREE.SphereGeometry(10, 8, 8);
+                const foliageMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x0a1a00,
+                    roughness: 0.8
+                });
+                const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                foliage.position.set(x, 17, z);
+                foliage.castShadow = true;
+                scene.add(foliage);
+            }
+
+            // المفاتيح
+            for (let i = 0; i < 5; i++) {
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * 400;
+                    z = (Math.random() - 0.5) * 400;
+                } while (Math.hypot(x, z) < 30);
+
+                createKey(x, 1, z);
+            }
+        }
+
+        function createKey(x, y, z) {
+            const keyGeometry = new THREE.OctahedronGeometry(0.6, 2);
+            const keyMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                metalness: 1,
+                roughness: 0.1,
+                emissive: 0xffaa00,
+                emissiveIntensity: 0.6
+            });
+            const key = new THREE.Mesh(keyGeometry, keyMaterial);
+            key.position.set(x, y, z);
+            key.castShadow = true;
+            key.userData.isKey = true;
+            key.userData.collected = false;
+            key.userData.rotSpeed = Math.random() * 0.05 + 0.02;
+            scene.add(key);
+        }
+
+        function createMonster() {
+            // الرأس
+            const headGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+            const headMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0a0a0a,
+                roughness: 0.9
+            });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 2;
+            head.castShadow = true;
+
+            // العيون الحمراء المرعبة
+            const eyeGeometry = new THREE.SphereGeometry(0.4, 8, 8);
+            const eyeMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 1,
+                metalness: 0.5
+            });
+
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.4, 0.5, 0.8);
+            head.add(leftEye);
+
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.4, 0.5, 0.8);
+            head.add(rightEye);
+
+            // الجسم الطويل المرعب
+            const bodyGeometry = new THREE.BoxGeometry(1, 3, 1);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: 0x050505,
+                roughness: 0.95
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = -0.8;
+            body.castShadow = true;
+
+            const monsterGroup = new THREE.Group();
+            monsterGroup.add(head);
+            monsterGroup.add(body);
+            monsterGroup.position.set(monster.x, monster.y, monster.z);
+
+            monster.mesh = monsterGroup;
+            monster.head = head;
+            monster.leftEye = leftEye;
+            monster.rightEye = rightEye;
+
+            scene.add(monsterGroup);
+        }
+
+        function setupControls() {
+            // لوحة المفاتيح
+            window.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                // التحكم بالكاميرا من لوحة المفاتيح أيضاً
+                if (e.key === 'ArrowUp') {
+                    player.pitch -= 0.1;
+                    player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+                }
+                if (e.key === 'ArrowDown') {
+                    player.pitch += 0.1;
+                    player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+                }
+                if (e.key === 'ArrowLeft') {
+                    player.yaw += 0.1;
+                }
+                if (e.key === 'ArrowRight') {
+                    player.yaw -= 0.1;
+                }
+            });
+            window.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+
+            // الماوس - تفعيل اللف المستمر بدون نقر
+            document.addEventListener('mousemove', (e) => {
+                if (!gameStarted) return;
+                // حساسية عالية للماوس
+                player.yaw -= e.movementX * 0.006;
+                player.pitch -= e.movementY * 0.006;
+                player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+            });
+
+            // قفل المؤشر عند الدخول إلى لعبة
+            document.addEventListener('click', () => {
+                if (!gameStarted) return;
+                if (document.pointerLockElement === null) {
+                    document.documentElement.requestPointerLock = document.documentElement.requestPointerLock || 
+                                                                   document.documentElement.mozRequestPointerLock;
+                    document.documentElement.requestPointerLock();
+                }
+            });
+
+            // اللمس - لف الكاميرا بسهولة
+            let lastTouchX = 0, lastTouchY = 0;
+            let isCameraLocking = false;
+
+            document.addEventListener('touchstart', (e) => {
+                if (!gameStarted) return;
+                
+                // تحقق إذا كان اللمس على الجويستيك أو الأزرار
+                const touch = e.touches[0];
+                const joystick = document.getElementById('joystick');
+                const flashBtn = document.getElementById('flashlight-btn');
+                
+                const joystickRect = joystick.getBoundingClientRect();
+                const flashRect = flashBtn.getBoundingClientRect();
+
+                // إذا لم تكن اللمسة على الجويستيك أو الزر، فهي لف الكاميرا
+                if (!(touch.clientX >= joystickRect.left && touch.clientX <= joystickRect.right &&
+                      touch.clientY >= joystickRect.top && touch.clientY <= joystickRect.bottom) &&
+                    !(touch.clientX >= flashRect.left && touch.clientX <= flashRect.right &&
+                      touch.clientY >= flashRect.top && touch.clientY <= flashRect.bottom)) {
+                    
+                    isCameraLocking = true;
+                    lastTouchX = touch.clientX;
+                    lastTouchY = touch.clientY;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!gameStarted || !isCameraLocking) return;
+                
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastTouchX;
+                const deltaY = touch.clientY - lastTouchY;
+
+                // حساسية عالية جداً للمس
+                player.yaw -= deltaX * 0.008;
+                player.pitch -= deltaY * 0.008;
+                player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                isCameraLocking = false;
+            }, { passive: true });
+
+            // الجويستيك - محسّن للموبايل
+            const joystick = document.getElementById('joystick');
+            const thumb = document.getElementById('joystick-thumb');
+            let joystickActive = false;
+            let joystickTouchId = null;
+
+            joystick.addEventListener('touchstart', (e) => {
+                for (let touch of e.touches) {
+                    const rect = joystick.getBoundingClientRect();
+                    if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                        touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                        joystickActive = true;
+                        joystickTouchId = touch.identifier;
+                        break;
+                    }
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!joystickActive || joystickTouchId === null) return;
+                
+                let joystickTouch = null;
+                for (let touch of e.touches) {
+                    if (touch.identifier === joystickTouchId) {
+                        joystickTouch = touch;
+                        break;
+                    }
+                }
+
+                if (!joystickTouch) return;
+
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let dx = joystickTouch.clientX - centerX;
+                let dy = joystickTouch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+                const maxDist = rect.width / 2 - 40;
+
+                if (dist > maxDist) {
+                    const angle = Math.atan2(dy, dx);
+                    joystickX = Math.cos(angle);
+                    joystickY = Math.sin(angle);
+                } else {
+                    joystickX = dist > 20 ? dx / maxDist * 0.8 : 0;
+                    joystickY = dist > 20 ? dy / maxDist * 0.8 : 0;
+                }
+
+                const offsetX = (joystickX * Math.min(dist, maxDist));
+                const offsetY = (joystickY * Math.min(dist, maxDist));
+                thumb.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+                
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('touchend', (e) => {
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === joystickTouchId) {
+                        joystickActive = false;
+                        joystickTouchId = null;
+                        joystickX = 0;
+                        joystickY = 0;
+                        thumb.style.transform = 'translate(-50%, -50%)';
+                        break;
+                    }
+                }
+            }, { passive: true });
+
+            // الأزرار
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('start-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startGame();
+            }, { passive: false });
+
+            document.getElementById('flashlight-btn').addEventListener('click', toggleLight);
+            document.getElementById('flashlight-btn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleLight();
+            }, { passive: false });
+
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                location.reload();
+            });
+        }
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('main-menu').classList.add('hidden');
+            initAudio();
+            playAmbientSound();
+        }
+
+        function toggleLight() {
+            lightMode = (lightMode + 1) % lightModes.length;
+            battery = 100;
+            playSound(900, 0.1, 'sine', 0.2);
+        }
+
+        // === الصوت ===
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(freq, duration, type = 'sine', vol = 0.3) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playMonsterSound() {
+            if (!audioCtx) return;
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    playSound(40 + Math.random() * 40, 0.7, 'sawtooth', 0.5);
+                }, i * 250);
+            }
+        }
+
+        function playHorrorScream() {
+            if (!audioCtx) return;
+            for (let i = 0; i < 15; i++) {
+                const freq = 150 + Math.random() * 800;
+                setTimeout(() => {
+                    playSound(freq, 1.8, 'triangle', 0.6);
+                }, Math.random() * 200);
+            }
+        }
+
+        function playAmbientSound() {
+            if (!audioCtx) initAudio();
+        }
+
+        function updateMonsterAI() {
+            if (!gameActive || !gameStarted) return;
+
+            const dx = player.x - monster.x;
+            const dz = player.z - monster.z;
+            monster.distToPlayer = Math.sqrt(dx * dx + dz * dz);
+
+            // إذا رأى اللاعب من خلال الضوء
+            if (monster.distToPlayer < 80 && lightMode > 0) {
+                monster.seenPlayer = true;
+            }
+
+            // إذا مسك اللاعب
+            if (monster.distToPlayer < 3) {
+                handleMonsterCatch();
+                return;
+            }
+
+            // حركة الوحش
+            if (monster.seenPlayer) {
+                const angle = Math.atan2(dz, dx);
+                monster.x += Math.cos(angle) * monster.speed * 1.3;
+                monster.z += Math.sin(angle) * monster.speed * 1.3;
+
+                // أصوات مرعبة
+                if (Math.random() < 0.015) {
+                    playMonsterSound();
+                }
+
+                // العيون تتوهج
+                const intensity = Math.min(2, 1 + (40 - monster.distToPlayer) / 40);
+                monster.leftEye.material.emissiveIntensity = intensity;
+                monster.rightEye.material.emissiveIntensity = intensity;
+            } else {
+                // تجول عشوائي
+                if (!monster.randomAngle || Math.random() < 0.003) {
+                    monster.randomAngle = Math.random() * Math.PI * 2;
+                }
+                monster.x += Math.cos(monster.randomAngle) * monster.speed * 0.2;
+                monster.z += Math.sin(monster.randomAngle) * monster.speed * 0.2;
+
+                monster.leftEye.material.emissiveIntensity = 0.8;
+                monster.rightEye.material.emissiveIntensity = 0.8;
+            }
+
+            monster.mesh.position.set(monster.x, monster.y, monster.z);
+
+            // تحديث البوصلة
+            const angle = Math.atan2(dz, dx);
+            const compassText = angle > -Math.PI/4 && angle < Math.PI/4 ? '↑' :
+                               angle > Math.PI/4 && angle < 3*Math.PI/4 ? '←' :
+                               angle > -3*Math.PI/4 && angle < -Math.PI/4 ? '→' : '↓';
+            document.getElementById('compass').textContent = `${compassText} MONSTER ${compassText}`;
+        }
+
+        function handleMonsterCatch() {
+            gameActive = false;
+            playHorrorScream();
+            showJumpScare();
+        }
+
+        function showJumpScare() {
+            const scareSreen = document.getElementById('jump-scare');
+            scareSreen.classList.add('active');
+
+            const canvas = document.getElementById('scare-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let frame = 0;
+            const scareInterval = setInterval(() => {
+                frame++;
+
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+
+                // رسم الوحش الضخم والمرعب جداً
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, 250, 350, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // العيون الضخمة الحمراء المرعبة جداً
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowBlur = 60;
+                ctx.shadowColor = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(cx - 120, cy - 100, 100, 0, Math.PI * 2);
+                ctx.arc(cx + 120, cy - 100, 100, 0, Math.PI * 2);
+                ctx.fill();
+
+                // بؤبؤ العيون
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(cx - 120 + Math.sin(frame * 0.2) * 15, cy - 100 + Math.cos(frame * 0.2) * 15, 40, 0, Math.PI * 2);
+                ctx.arc(cx + 120 + Math.sin(frame * 0.2) * 15, cy - 100 + Math.cos(frame * 0.2) * 15, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                // الفم المرعب
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + 120, 180, 150, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // أسنان حادة
+                ctx.fillStyle = '#fff';
+                for (let i = -150; i <= 150; i += 40) {
+                    ctx.fillRect(cx + i, cy + 50, 20, 120);
+                }
+
+                // دماء
+                ctx.fillStyle = 'rgba(200, 0, 0, 0.9)';
+                for (let i = 0; i < 25; i++) {
+                    ctx.beginPath();
+                    ctx.arc(cx - 250 + Math.random() * 500, cy + Math.random() * 300, 20 + Math.random() * 40, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // نص الخوف
+                ctx.fillStyle = '#ff0000';
+                ctx.font = 'bold 80px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 50;
+                ctx.shadowColor = '#ff0000';
+                ctx.fillText('لا طريق للهروب!', cx, 100);
+
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText('لقد وجدني...', cx, 160);
+
+                if (frame > 150) {
+                    clearInterval(scareInterval);
+                    setTimeout(() => {
+                        scareSreen.classList.remove('active');
+                        document.getElementById('death-screen').classList.add('active');
+                    }, 400);
+                }
+            }, 25);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!gameStarted) return;
+
+            // حركة اللاعب
+            const moveDir = new THREE.Vector3();
+            if (keys['w'] || joystickY < -0.3) moveDir.z -= 1;
+            if (keys['s'] || joystickY > 0.3) moveDir.z += 1;
+            if (keys['a'] || joystickX < -0.3) moveDir.x -= 1;
+            if (keys['d'] || joystickX > 0.3) moveDir.x += 1;
+
+            if (moveDir.length() > 0) {
+                moveDir.normalize();
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
+
+                player.x += moveDir.x * player.speed;
+                player.z += moveDir.z * player.speed;
+
+                // حدود العالم
+                player.x = Math.max(-200, Math.min(200, player.x));
+                player.z = Math.max(-200, Math.min(200, player.z));
+            }
+
+            // تحديث الكاميرا
+            camera.position.set(player.x, player.y, player.z);
+            camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
+
+            // تحديث الإضاءة
+            const mode = lightModes[lightMode];
+            flashlight.intensity = mode.intensity;
+            flashlight.distance = mode.range;
+            flashlight.position.copy(camera.position);
+
+            const direction = camera.getWorldDirection(new THREE.Vector3());
+            flashlight.target.position.copy(camera.position).addScaledVector(direction, 100);
+
+            // استهلاك البطارية
+            if (lightMode > 0) {
+                battery = Math.max(0, battery - batteryDrain[lightMode]);
+                if (battery === 0) lightMode = 0;
+            }
+
+            // تحديث واجهة المستخدم
+            document.getElementById('coordinates').textContent = 
+                `X: ${Math.floor(player.x)} | Z: ${Math.floor(player.z)}`;
+            document.getElementById('light-status').textContent = `💡 LIGHT: ${lightModes[lightMode].name}`;
+            document.getElementById('monster-distance').textContent = 
+                `👹 DIST: ${Math.floor(monster.distToPlayer)}m`;
+            document.getElementById('battery-fill').style.width = battery + '%';
+
+            const fillColor = battery > 50 ? '#0f0' : (battery > 20 ? '#ff0' : '#f00');
+            document.getElementById('battery-fill').style.background = fillColor;
+
+            // جمع المفاتيح
+            scene.children.forEach(obj => {
+                if (obj.userData.isKey && !obj.userData.collected) {
+                    if (obj.position.distanceTo(camera.position) < 1.5) {
+                        obj.userData.collected = true;
+                        keysCollected++;
+                        scene.remove(obj);
+                        playSound(1200, 0.2, 'sine', 0.3);
+                    } else {
+                        obj.rotation.x += obj.userData.rotSpeed;
+                        obj.rotation.y += obj.userData.rotSpeed * 1.5;
+                        obj.position.y += Math.sin(Date.now() * 0.002) * 0.02;
+                    }
+                }
+            });
+
+            document.getElementById('key-count').textContent = keysCollected;
+
+            // تحديث الوحش
+            updateMonsterAI();
+
+            renderer.render(scene, camera);
+        }
+
+        // بدء اللعبة
+        window.addEventListener('load', () => {
+            initAudio();
+            init();
+        });
+
+        window.addEventListener('resize', () => {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+    </script>
+</body>
+</html>
