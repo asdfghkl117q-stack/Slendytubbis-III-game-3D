@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slendytubbies 3D - Advanced Environment & Flashlight</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght=400;700&display=swap');
+
+        body { margin: 0; overflow: hidden; background: #020204; font-family: sans-serif; touch-action: none; user-select: none; }
+        
+        /* شاشات القوائم الرئيسية */
+        #startScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #030708; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; box-sizing: border-box; font-family: 'Oswald', sans-serif; transition: opacity 0.5s ease; }
+        #startScreen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%); pointer-events: none; z-index: 2; }
+        .menu-container { display: flex; flex-direction: column; align-items: flex-start; z-index: 3; direction: ltr; }
+        .logo-area { margin-bottom: 40px; display: flex; align-items: center; }
+        .main-title { color: #ffffff; font-size: 3.8rem; font-weight: 700; letter-spacing: 1px; line-height: 1; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); font-family: 'Impact', 'Oswald', sans-serif; }
+        .roman-numeral { color: #8b0000; font-size: 4rem; font-weight: 700; margin-left: 15px; letter-spacing: -2px; text-shadow: 0 0 10px rgba(139, 0, 0, 0.6); }
+        .sub-title { color: #aaaaaa; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 5px; display: block; }
+
+        .menu-options { list-style: none; display: flex; flex-direction: column; gap: 15px; padding: 0; margin: 0; }
+        .menu-options li a { color: #b0b5b8; text-decoration: none; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s ease; cursor: pointer; display: inline-block; }
+        .menu-options li a:hover { color: #ffffff; transform: translateX(8px); text-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+
+        #onlineMenu, #skinsMenu { display: none; flex-direction: column; gap: 15px; z-index: 5; background: rgba(10, 10, 15, 0.95); padding: 25px; border-radius: 8px; border: 2px solid #8b0000; color: white; min-width: 320px; text-align: center; }
+        #skinsMenu { border-color: #00ffcc; }
+        #onlineMenu input { background: #222; border: 1px solid #444; color: white; padding: 8px; font-size: 1rem; text-align: center; border-radius: 4px; }
+        .online-btn { background: #8b0000; color: white; border: none; padding: 10px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; }
+        .skin-option { padding: 12px; margin: 5px 0; background: #151922; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.2s; }
+        .skin-option.active { border-color: #00ffcc; background: rgba(0, 255, 204, 0.2); color: #00ffcc; }
+
+        .top-right-login { position: absolute; top: 25px; right: 40px; color: #7a8288; font-size: 0.9rem; z-index: 3; cursor: pointer; }
+        .bottom-left-logo { position: absolute; bottom: 25px; left: 40px; width: 35px; height: 35px; border: 2px solid #8b0000; display: flex; justify-content: center; align-items: center; color: #8b0000; font-weight: bold; font-size: 1.2rem; z-index: 3; }
+        .version-tag { position: absolute; bottom: 25px; right: 40px; color: #444; font-size: 0.8rem; z-index: 3; }
+
+        .characters-simulation { position: absolute; right: 10%; bottom: 0; width: 450px; height: 80%; background: linear-gradient(to top, rgba(3,7,8,1) 5%, transparent 80%); z-index: 1; display: flex; justify-content: center; align-items: flex-end; opacity: 0.45; filter: blur(1px) contrast(1.2); }
+        .tubbie-shadow { width: 140px; height: 340px; background: #1a282d; border-radius: 60px 60px 0 0; margin: 0 -10px; position: relative; box-shadow: inset 0 15px 30px rgba(0,0,0,0.8); }
+        .tubbie-shadow.center { height: 400px; width: 160px; background: #20353c; z-index: 2; }
+        .tubbie-shadow::before { content: '..'; color: #000; font-size: 3rem; letter-spacing: 10px; position: absolute; top: 40px; left: 35%; opacity: 0.8; }
+
+        /* واجهة اللعب */
+        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: none; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: #ff0000; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #000; }
+        #networkStatus { position: absolute; top: 15px; left: 15px; color: #ff0000; font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 4px; z-index: 15; display: none; border: 1px solid #ff0000; }
+
+        #leftZone { position: absolute; top: 0; left: 0; width: 50%; height: 100%; z-index: 5; display: none; pointer-events: auto; }
+        #rightZone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; z-index: 5; display: none; pointer-events: auto; }
+        #joystickZone { position: absolute; bottom: 30px; left: 40px; width: 110px; height: 110px; background: rgba(255, 255, 255, 0.05); border: 2px solid #555; border-radius: 50%; pointer-events: none; }
+        #joystickKnob { position: absolute; top: 27px; left: 27px; width: 55px; height: 55px; background: rgba(255, 0, 0, 0.4); border-radius: 50%; pointer-events: none; }
+        
+        #jumpBtn { position: absolute; bottom: 30px; right: 40px; width: 80px; height: 80px; background: rgba(40, 40, 45, 0.6); border-radius: 50%; border: 3px solid #8b0000; z-index: 6; display: none; color: white; font-size: 18px; font-weight: bold; cursor: pointer; }
+        
+        /* زر الفلاش لايت الجديد */
+        #flashlightBtn { position: absolute; bottom: 125px; right: 40px; width: 60px; height: 60px; background: rgba(255, 255, 0, 0.2); border-radius: 50%; border: 2px solid #ffff00; z-index: 6; display: none; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,0,0.5); }
+        #flashlightBtn.active { background: rgba(255, 255, 0, 0.8); color: black; box-shadow: 0 0 20px #ffff00; }
+
+        #settingsToggleBtn { position: absolute; top: 15px; right: 15px; width: 45px; height: 45px; background: rgba(15, 12, 27, 0.8); border: 2px solid #8b0000; border-radius: 50%; color: #fff; font-size: 20px; display: none; z-index: 20; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; }
+
+        /* الإعدادات */
+        #settingsMenu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 460px; max-height: 90%; background: rgba(15, 12, 27, 0.96); border: 2px solid #8b0000; border-radius: 12px; padding: 12px 20px; box-sizing: border-box; z-index: 30; display: none; flex-direction: column; color: white; gap: 8px; pointer-events: auto; overflow-y: auto; }
+        #settingsMenu h3 { margin: 0 0 2px 0; text-align: center; color: #8b0000; font-size: 18px; }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .setting-row { display: flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: bold; color: #aaa; }
+        .setting-row label { display: flex; justify-content: space-between; }
+        .setting-row input[type="range"] { width: 100%; accent-color: #8b0000; cursor: pointer; margin: 2px 0; }
+        .view-section { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+        .view-section span { font-size: 12px; color: #aaa; font-weight: bold; text-align: center; }
+        .view-buttons { display: flex; gap: 6px; justify-content: center; }
+        .view-btn { flex: 1; padding: 6px; font-size: 11px; font-weight: bold; background: #1a1530; color: #aaa; border: 1px solid #444; border-radius: 6px; cursor: pointer; }
+        .view-btn.active { background: #8b0000; color: white; border-color: #8b0000; }
+        .menu-footer { display: flex; gap: 10px; margin-top: 6px; }
+        .footer-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        #closeSettingsBtn { background: #8b0000; color: white; }
+    </style>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+    <div id="networkStatus">المود: فردي</div>
+
+    <div id="startScreen">
+        <div class="top-right-login">[LOGIN TO ACCOUNT]</div>
+        <div class="menu-container">
+            <div class="logo-area">
+                <div>
+                    <h1 class="main-title">SLENDYTUBBIES</h1>
+                    <span class="sub-title">ADVANCED EDITION (3D)</span>
+                </div>
+                <div class="roman-numeral">III</div>
+            </div>
+
+            <ul class="menu-options" id="mainMenuOptions">
+                <li><a href="#" id="playSoloBtn">Play Solo</a></li>
+                <li><a href="#" id="playOnlineBtn">Play Online</a></li>
+                <li><a href="#" id="openSkinsBtn">Character Customization</a></li>
+                <li><a href="#" id="menuOptionsBtn">Options</a></li>
+                <li><a href="#" onclick="if(confirm('Exit Game?')) window.close();">Exit</a></li>
+            </ul>
+
+            <div id="skinsMenu">
+                <h3 style="margin:0; color:#00ffcc; font-size:1.4rem; text-transform:uppercase;">Customization</h3>
+                <p style="font-size:0.9rem; color:#aaa; margin:0;">اختر مظهر لاعبك (Skin)</p>
+                <div class="skin-option active" data-skin="neon">Neon (أخضر مضيء)</div>
+                <div class="skin-option" data-skin="horror">Bloody (دموي مرعب)</div>
+                <div class="skin-option" data-skin="cyborg">Cyborg (روبوت آلي)</div>
+                <button class="online-btn" id="saveSkinBtn" style="background:#00ffcc; color:black; margin-top:10px;">حفظ المظهر</button>
+            </div>
+
+            <div id="onlineMenu">
+                <h3 style="margin:0; color:#ff0000; font-size:1.4rem;">MULTIPLAYER SERVERS</h3>
+                <p id="peerIdDisplay" style="font-size:0.9rem; color:#aaa;">جاري الاتصال بالشبكة...</p>
+                <button class="online-btn" id="hostRoomBtn" disabled>إنشاء خادم جديد (Host)</button>
+                <hr style="width:100%; border-color:#444;">
+                <input type="text" id="joinIdInput" placeholder="أدخل رمز خادم صديقك">
+                <button class="online-btn" id="joinRoomBtn">اتصال وانطلاق</button>
+                <a href="#" id="backToMenuBtn" style="color:#aaa; text-align:center; font-size:0.9rem; margin-top:5px;">العودة للخلف</a>
+            </div>
+        </div>
+
+        <div class="characters-simulation">
+            <div class="tubbie-shadow"></div>
+            <div class="tubbie-shadow center"></div>
+            <div class="tubbie-shadow"></div>
+        </div>
+        <div class="bottom-left-logo">†</div>
+        <div class="version-tag">V1.50 - FLASHLIGHT UPDATE</div>
+    </div>
+
+    <div id="ui"><div id="crosshair"></div></div>
+    <button id="settingsToggleBtn">⚙️</button>
+
+    <div id="settingsMenu">
+        <h3>إعدادات اللعبة</h3>
+        <div class="settings-grid">
+            <div class="setting-row"><label><span>حساسية الكاميرا</span><span id="sensVal">50</span></label><input type="range" id="sensSlider" min="10" max="150" value="50"></div>
+            <div class="setting-row"><label><span>سرعة اللاعب</span><span id="speedVal">20</span></label><input type="range" id="speedSlider" min="10" max="60" value="20"></div>
+            <div class="setting-row"><label><span>زاوية المنظور (FOV)</span><span id="fovVal">75</span></label><input type="range" id="fovSlider" min="50" max="110" value="75"></div>
+            <div class="setting-row"><label><span>مستوى الزوم</span><span id="zoomVal">1.0</span></label><input type="range" id="zoomSlider" min="1.0" max="3.0" step="0.1" value="1.0"></div>
+        </div>
+        
+        <div class="view-section">
+            <span>تغيير منظور الكاميرا</span>
+            <div class="view-buttons">
+                <button class="view-btn" id="btn1stPerson">شخص أول</button>
+                <button class="view-btn active" id="btn3rdPersonBack">شخص ثالث خلفي</button>
+                <button class="view-btn" id="btn3rdPersonFront">شخص ثالث أمامي</button>
+            </div>
+        </div>
+
+        <div class="view-section" style="margin-top: 10px;">
+            <span>وقت البيئة (العالم)</span>
+            <div class="view-buttons">
+                <button class="view-btn active" id="btnNightMode">ليل (رعب)</button>
+                <button class="view-btn" id="btnDayMode">نهار (مشرق)</button>
+            </div>
+        </div>
+
+        <div class="menu-footer"><button class="footer-btn" id="closeSettingsBtn">حفظ وإغلاق</button></div>
+    </div>
+
+    <div id="leftZone"><div id="joystickZone"><div id="joystickKnob"></div></div></div>
+    <div id="rightZone"></div>
+    <button id="flashlightBtn">🔦</button>
+    <button id="jumpBtn">قفز</button>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+        import * as CANNON from 'https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js';
+
+        let peer = null; let connections = []; let remotePlayers = {}; 
+        let isMultiplayer = false; let isHost = false; let selectedSkin = 'neon';
+
+        const defaultSettings = { sensitivity: 0.005, baseFov: 75, zoomMultiplier: 1.0, playerSpeed: 20, cameraMode: '3rdPersonBack' };
+        let settings = { ...defaultSettings };
+
+        // إنشاء المشهد الأساسي
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(settings.baseFov, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -26, 0) }); 
+        
+        // 1. نظام الإضاءة وتخصيص الليل والنهار
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // خافت افتراضياً للرعب
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.0); // مطفأ في الليل
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        function setWorldEnvironment(isDay) {
+            if (isDay) {
+                scene.background = new THREE.Color(0x87CEEB); // سماء زرقاء
+                scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
+                ambientLight.intensity = 0.5;
+                directionalLight.intensity = 1.0;
+                document.getElementById('btnDayMode').classList.add('active');
+                document.getElementById('btnNightMode').classList.remove('active');
+            } else {
+                scene.background = new THREE.Color(0x010204); // سماء سوداء
+                scene.fog = new THREE.FogExp2(0x010204, 0.04);
+                ambientLight.intensity = 0.05;
+                directionalLight.intensity = 0.0;
+                document.getElementById('btnNightMode').classList.add('active');
+                document.getElementById('btnDayMode').classList.remove('active');
+            }
+        }
+        setWorldEnvironment(false); // البداية تكون ليل
+
+        document.getElementById('btnDayMode').addEventListener('click', () => setWorldEnvironment(true));
+        document.getElementById('btnNightMode').addEventListener('click', () => setWorldEnvironment(false));
+
+        // 2. نظام الكشاف اليدوي (Flashlight) الخاص باللاعب
+        const flashlight = new THREE.SpotLight(0xffffff, 0, 80, Math.PI / 5, 0.5, 1);
+        scene.add(flashlight);
+        scene.add(flashlight.target);
+        let flashlightOn = false;
+
+        document.getElementById('flashlightBtn').addEventListener('click', () => {
+            flashlightOn = !flashlightOn;
+            flashlight.intensity = flashlightOn ? 25 : 0; // قوة الكشاف عندما يعمل
+            const btn = document.getElementById('flashlightBtn');
+            if (flashlightOn) btn.classList.add('active'); else btn.classList.remove('active');
+        });
+
+        // الأرض والجدران والمصابيح (نفس الخريطة السابقة مع مصابيح قوية)
+        const floorGeo = new THREE.PlaneGeometry(200, 200);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111215, roughness: 0.9, metalness: 0.1 });
+        const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+        floorMesh.rotation.x = -Math.PI / 2;
+        scene.add(floorMesh);
+        const floorBody = new CANNON.Body({ type: CANNON.Body.STATIC, shape: new CANNON.Plane() });
+        floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+        world.addBody(floorBody);
+
+        function createWall(w, h, d, x, y, z) {
+            const wallMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0x0a0b0d }));
+            wallMesh.position.set(x, y, z); scene.add(wallMesh);
+            world.addBody(new CANNON.Body({ type: CANNON.Body.STATIC, shape: new CANNON.Box(new CANNON.Vec3(w/2, h/2, d/2)), position: new CANNON.Vec3(x, y, z) }));
+        }
+        createWall(200, 15, 2, 0, 7.5, -100); createWall(200, 15, 2, 0, 7.5, 100);
+        createWall(2, 15, 200, -100, 7.5, 0); createWall(2, 15, 200, 100, 7.5, 0);
+
+        function createStreetLamp(x, z) {
+            const group = new THREE.Group();
+            group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 10), new THREE.MeshStandardMaterial({ color: 0x333333 })).translateY(5));
+            group.add(new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffaa44 })).translateY(10));
+            // زيادة قوة مصابيح الشارع هنا (الشدة 15 والمدى 60)
+            const light = new THREE.PointLight(0xffaa44, 15, 60); light.decay = 1.5; light.position.set(0, 9.5, 0);
+            group.add(light);
+            group.position.set(x, 0, z); scene.add(group);
+        }
+        createStreetLamp(-20, -20); createStreetLamp(20, 20); createStreetLamp(-40, 30); createStreetLamp(40, -30);
+
+        // بناء جسم اللاعب
+        function createPlayerModel(skinType) {
+            const playerGroup = new THREE.Group();
+            let bodyColor = 0x00ffcc; let eyeColor = 0xffffff;
+            if(skinType === 'horror') { bodyColor = 0x8b0000; eyeColor = 0xff0000; }
+            if(skinType === 'cyborg') { bodyColor = 0x778899; eyeColor = 0x00ffff; }
+
+            const material = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.4 });
+            const bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.6, 16), material); bodyMesh.position.y = 0.8; playerGroup.add(bodyMesh);
+            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), material); headMesh.position.y = 1.9; playerGroup.add(headMesh);
+
+            const eyeMat = new THREE.MeshBasicMaterial({ color: eyeColor });
+            // ملاحظة: الأعين في الاتجاه +Z (وهو وجه اللاعب)
+            const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), eyeMat); leftEye.position.set(0.18, 2.0, 0.4);
+            const rightEye = leftEye.clone(); rightEye.position.x = -0.18;
+            playerGroup.add(leftEye); playerGroup.add(rightEye);
+            
+            const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5), material); antenna.position.set(0, 2.5, 0); playerGroup.add(antenna);
+            return playerGroup;
+        }
+
+        let playerVisualGroup = createPlayerModel(selectedSkin); scene.add(playerVisualGroup);
+        const playerBody = new CANNON.Body({ mass: 60, shape: new CANNON.Sphere(1.2), position: new CANNON.Vec3(0, 3, 0) });
+        playerBody.fixedRotation = true; world.addBody(playerBody);
+
+        let cameraPitch = 0, cameraYaw = 0, moveX = 0, moveY = 0;
+        const joystickZone = document.getElementById('joystickZone'); const joystickKnob = document.getElementById('joystickKnob');
+        let joystickCenter = { x: 0, y: 0 }, joystickTouchId = null;
+
+        function recountJoystickCenter() { const rect = joystickZone.getBoundingClientRect(); joystickCenter.x = rect.left + rect.width / 2; joystickCenter.y = rect.top + rect.height / 2; }
+        
+        // أحداث القوائم والسكنات والأونلاين
+        document.getElementById('openSkinsBtn').addEventListener('click', () => { document.getElementById('mainMenuOptions').style.display = 'none'; document.getElementById('skinsMenu').style.display = 'flex'; });
+        document.querySelectorAll('.skin-option').forEach(opt => { opt.addEventListener('click', function() { document.querySelectorAll('.skin-option').forEach(o => o.classList.remove('active')); this.classList.add('active'); selectedSkin = this.getAttribute('data-skin'); }); });
+        document.getElementById('saveSkinBtn').addEventListener('click', () => { scene.remove(playerVisualGroup); playerVisualGroup = createPlayerModel(selectedSkin); scene.add(playerVisualGroup); document.getElementById('skinsMenu').style.display = 'none'; document.getElementById('mainMenuOptions').style.display = 'flex'; });
+
+        document.getElementById('playOnlineBtn').addEventListener('click', () => { document.getElementById('mainMenuOptions').style.display = 'none'; document.getElementById('onlineMenu').style.display = 'flex'; if(!peer) initNetwork(); });
+        document.getElementById('backToMenuBtn').addEventListener('click', () => { document.getElementById('onlineMenu').style.display = 'none'; document.getElementById('mainMenuOptions').style.display = 'flex'; });
+        document.getElementById('playSoloBtn').addEventListener('click', () => { isMultiplayer = false; document.getElementById('networkStatus').innerText = "المود: لعب فردي"; startGame(); });
+
+        function initNetwork() {
+            peer = new Peer('SLENDY-' + Math.floor(1000 + Math.random() * 9000));
+            peer.on('open', (id) => { document.getElementById('peerIdDisplay').innerText = `رمز خادمك هو: ${id}`; document.getElementById('hostRoomBtn').disabled = false; });
+            peer.on('connection', (conn) => { setupConnection(conn); });
+        }
+        document.getElementById('hostRoomBtn').addEventListener('click', () => { isMultiplayer = true; isHost = true; document.getElementById('networkStatus').innerText = "المستضيف (Host)"; startGame(); });
+        document.getElementById('joinRoomBtn').addEventListener('click', () => { const targetId = document.getElementById('joinIdInput').value.trim(); if(!targetId) return; isMultiplayer = true; isHost = false; document.getElementById('networkStatus').innerText = "متصل"; setupConnection(peer.connect(targetId)); startGame(); });
+
+        function setupConnection(conn) { connections.push(conn); conn.on('data', (data) => { if(data.type === 'move') { updateRemotePlayer(data); } }); }
+        function updateRemotePlayer(data) {
+            if (!remotePlayers[data.id]) { const remoteMesh = createPlayerModel(data.skin); scene.add(remoteMesh); remotePlayers[data.id] = remoteMesh; }
+            remotePlayers[data.id].position.set(data.pos.x, data.pos.y, data.pos.z);
+            remotePlayers[data.id].rotation.y = data.rot;
+        }
+
+        async function startGame() {
+            document.getElementById('startScreen').style.opacity = '0'; setTimeout(() => { document.getElementById('startScreen').style.display = 'none'; }, 500);
+            document.getElementById('ui').style.display = 'block'; document.getElementById('networkStatus').style.display = 'block';
+            document.getElementById('leftZone').style.display = 'block'; document.getElementById('rightZone').style.display = 'block';
+            document.getElementById('jumpBtn').style.display = 'block'; document.getElementById('flashlightBtn').style.display = 'block'; document.getElementById('settingsToggleBtn').style.display = 'flex';
+            setTimeout(() => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); recountJoystickCenter(); }, 300);
+        }
+
+        // إعدادات التحكم
+        document.getElementById('settingsToggleBtn').addEventListener('click', () => document.getElementById('settingsMenu').style.display = 'flex');
+        document.getElementById('menuOptionsBtn').addEventListener('click', () => document.getElementById('settingsMenu').style.display = 'flex');
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsMenu').style.display = 'none');
+
+        document.getElementById('btn1stPerson').addEventListener('click', () => setCameraMode('1stPerson'));
+        document.getElementById('btn3rdPersonBack').addEventListener('click', () => setCameraMode('3rdPersonBack'));
+        document.getElementById('btn3rdPersonFront').addEventListener('click', () => setCameraMode('3rdPersonFront'));
+        function setCameraMode(mode) { settings.cameraMode = mode; document.querySelectorAll('.view-btn').forEach(btn => btn.id.includes('Person') && btn.classList.remove('active')); document.getElementById('btn' + mode).classList.add('active'); }
+
+        document.getElementById('speedSlider').addEventListener('input', (e) => { document.getElementById('speedVal').innerText = e.target.value; settings.playerSpeed = parseInt(e.target.value); });
+        document.getElementById('sensSlider').addEventListener('input', (e) => { document.getElementById('sensVal').innerText = e.target.value; settings.sensitivity = e.target.value * 0.0001; });
+
+        const leftZone = document.getElementById('leftZone');
+        leftZone.addEventListener('touchstart', (e) => { recountJoystickCenter(); const touch = e.changedTouches[0]; joystickTouchId = touch.identifier; handleJoystickMove(touch); });
+        leftZone.addEventListener('touchmove', (e) => { if (joystickTouchId === null) return; for (let i = 0; i < e.touches.length; i++) { if (e.touches[i].identifier === joystickTouchId) handleJoystickMove(e.touches[i]); } });
+        leftZone.addEventListener('touchend', (e) => { for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === joystickTouchId) { joystickTouchId = null; moveX = 0; moveY = 0; joystickKnob.style.transform = `translate(0px, 0px)`; } } });
+        function handleJoystickMove(touch) {
+            const dx = (touch.clientX - joystickCenter.x) * -1; const dy = touch.clientY - joystickCenter.y;
+            const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 40); const angle = Math.atan2(dy, dx);
+            joystickKnob.style.transform = `translate(${-Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
+            moveX = (Math.cos(angle) * dist) / 40; moveY = (Math.sin(angle) * dist) / 40;
+        }
+
+        const rightZone = document.getElementById('rightZone');
+        let lastTouchX = 0, lastTouchY = 0, cameraTouchId = null;
+        rightZone.addEventListener('touchstart', (e) => { const touch = e.changedTouches[0]; lastTouchX = touch.clientX; lastTouchY = touch.clientY; cameraTouchId = touch.identifier; });
+        rightZone.addEventListener('touchmove', (e) => { if (cameraTouchId === null) return; for (let i = 0; i < e.touches.length; i++) { if (e.touches[i].identifier === cameraTouchId) { const touch = e.touches[i]; const deltaX = (touch.clientX - lastTouchX) * -1; const deltaY = touch.clientY - lastTouchY; if (!isNaN(deltaX) && !isNaN(deltaY)) { cameraYaw -= deltaX * settings.sensitivity; cameraPitch -= deltaY * settings.sensitivity; cameraPitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, cameraPitch)); } lastTouchX = touch.clientX; lastTouchY = touch.clientY; } } });
+        rightZone.addEventListener('touchend', (e) => { for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === cameraTouchId) cameraTouchId = null; } });
+        document.getElementById('jumpBtn').addEventListener('touchstart', (e) => { e.preventDefault(); if (Math.abs(playerBody.velocity.y) < 0.1) playerBody.velocity.y = 13.0; });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            world.step(1/60);
+            
+            const fwd = new THREE.Vector3(Math.sin(cameraYaw), 0, Math.cos(cameraYaw));
+            const rgt = new THREE.Vector3(Math.sin(cameraYaw - Math.PI/2), 0, Math.cos(cameraYaw - Math.PI/2));
+            
+            playerBody.velocity.x = (moveY * fwd.x + moveX * rgt.x) * settings.playerSpeed;
+            playerBody.velocity.z = (moveY * fwd.z + moveX * rgt.z) * settings.playerSpeed;
+
+            playerVisualGroup.position.copy(playerBody.position);
+            
+            // 💡 إصلاح دوران اللاعب (توجيه اللاعب لينظر للأمام دائماً وعكس الكاميرا في الشخص الثالث الخلفي)
+            playerVisualGroup.rotation.y = cameraYaw + Math.PI;
+
+            const playerEyeHeight = playerBody.position.y + 0.7;
+            camera.quaternion.setFromEuler(new THREE.Euler(cameraPitch, cameraYaw, 0, 'YXZ'));
+
+            // تحديث الكشاف ليتحرك مع الكاميرا
+            flashlight.position.copy(camera.position);
+            const targetPosition = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
+            flashlight.target.position.copy(targetPosition);
+
+            if (settings.cameraMode === '1stPerson') {
+                camera.position.set(playerBody.position.x, playerEyeHeight, playerBody.position.z);
+                playerVisualGroup.visible = false;
+                if (document.getElementById('startScreen').style.display === 'none') document.getElementById('crosshair').style.display = 'block';
+            } 
+            else if (settings.cameraMode === '3rdPersonBack') {
+                playerVisualGroup.visible = true; document.getElementById('crosshair').style.display = 'none';
+                const offset = new THREE.Vector3(0, 2.5, 6.0).applyQuaternion(camera.quaternion);
+                camera.position.copy(playerBody.position).add(offset);
+            } 
+            else if (settings.cameraMode === '3rdPersonFront') {
+                playerVisualGroup.visible = true; document.getElementById('crosshair').style.display = 'none';
+                const offset = new THREE.Vector3(0, 1.5, -6.0).applyQuaternion(camera.quaternion);
+                camera.position.copy(playerBody.position).add(offset);
+                camera.lookAt(playerBody.position.x, playerEyeHeight, playerBody.position.z);
+            }
+
+            if(isMultiplayer && peer) { connections.forEach(conn => { if(conn.open) conn.send({ type: 'move', id: peer.id, skin: selectedSkin, pos: { x: playerBody.position.x, y: playerBody.position.y, z: playerBody.position.z }, rot: cameraYaw + Math.PI }); }); }
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); recountJoystickCenter(); });
+    </script>
+</body>
+</html>
